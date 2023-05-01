@@ -35,7 +35,7 @@ class WorkController extends Controller
             $work = Work::create([
                 'description' => $request->description,
                 'hours' => "0",
-                'state' => "pendiente",
+                'state' => false,
                 'order_id' => $request->order_id,
             ]);
             $returnData = [
@@ -178,14 +178,14 @@ class WorkController extends Controller
             ->get();
 
             $users_not_assigned = User::select('users.id', 'users.name', 'users.surname','users.email')
-            ->whereNotIn('id', function ($query) {
+            ->whereNotIn('id', function ($query) use ($work_id) {
                 $query->select('user_id')
                       ->from('user_work')
-                      ->join('users', 'user_work.user_id', '=', 'users.id');
+                      ->join('users', 'user_work.user_id', '=', 'users.id')
+                      ->where('user_work.work_id',$work_id);
             })
-            ->where('course_id', 1)
+            ->where('course_id', $course_id)
             ->get()->toArray();
-
             $response = [
                 "ASSIGNED" =>$users_assigned,
                 "NOT_ASSIGNED" =>$users_not_assigned
@@ -201,22 +201,55 @@ class WorkController extends Controller
         $role_id = $user->role_id;
         if ($role_id == 1) {
             $work = Work::find($id);
-            $students_associated = $work->users()->select('name','surname','email','id')->get()->toArray();
+            $students_associated = $work->users()->select('name','surname','email','id')->get()->toArray(); 
             return response()->json($students_associated, 200);
         } else {
             return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
         }
     }
-    /*
-    public function associateCategory($order, $)
-    {
-        $post = Post::find($post_id);
-        $category = Category::find($category);
-        if ($post->categories()->save($category)) {
-            return true;
+
+    public function getWorksByStudent(){
+        $user = Auth::user();
+        $user_id = $user->id;
+        if($user){
+            $pendingWorks = Work::select('works.id','works.description','cars.plate','works.state','user_work.description as comment')
+            ->join('user_work','works.id','=','user_work.work_id')
+            ->join('orders','works.order_id','=','orders.id')
+            ->join('cars','orders.car_id','=','cars.id')
+            ->where('user_work.user_id',"=","$user_id")
+            ->where('works.state', '=','0')
+            ->get()->toArray();
+            $completedWorks = Work::select('works.id','works.description','cars.plate','works.state','user_work.description as comment')
+            ->join('user_work','works.id','=','user_work.work_id')
+            ->join('orders','works.order_id','=','orders.id')
+            ->join('cars','orders.car_id','=','cars.id')
+            ->where('user_work.user_id',"=","$user_id")
+            ->where('works.state', '=','1')
+            ->get()->toArray();
+            return response()->json([
+                                    "pendientes" => $pendingWorks,
+                                    "finalizados" =>$completedWorks
+                                    ]);
+        }else{
+            return response()->json(['message' => 'Error al encontrar al usuario'], 400);
         }
-        return false;
     }
 
-    */
+    public function changeState(Request $request){
+        $user = Auth::user();
+        $user_id = $user->id;
+        if($user){
+            $work = Work::find($request->work_id);
+            if($request->state && $user->role_id ==1){
+                $work->state = $request->state;
+            }else{
+                $work->state = 1;
+                $work->description = $request->description;
+            }
+            $work->save();
+            return response()->json(["Trabajo actualizado" => $work]);
+        }else{
+            return response()->json(['message' => 'Error al encontrar al usuario'], 400);
+        }
+    }
 }

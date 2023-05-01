@@ -31,7 +31,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'username' => 'required|string|',
+            'email' => 'required|string|',
             'password' => 'required|string',
         ]);
         if ($validator->fails()) {
@@ -42,7 +42,7 @@ class AuthController extends Controller
             ], 400));
         }
         // $request->validate();
-        $credentials = $request->only('username', 'password');
+        $credentials = $request->only('email', 'password');
         // $token = auth()->claims(['foo' => 'bar'])->attempt($credentials);
 
         $token = Auth::attempt($credentials);
@@ -150,9 +150,6 @@ class AuthController extends Controller
         ];
         return response()->json([
             'access_token' => Auth::refresh(),
-            'token_type' => 'bearer',
-            'expires_in' => env('JWT_TTL') * 3600,
-            'user' => $data_user,
         ]);
     }
 
@@ -211,7 +208,7 @@ class AuthController extends Controller
     function createStudentsFromCSV(Request $request)
     {
         if (!$request->hasFile('csv')) {
-            return response()->json(['error' => 'No se ha enviado ningún archivo.'], 400);
+            return response()->json(['message' => 'No se ha enviado ningún archivo.'], 400);
         }
 
         // Obtenemos el archivo del request
@@ -219,7 +216,7 @@ class AuthController extends Controller
 
         // Validamos que el archivo sea un CSV
         if ($file->getClientOriginalExtension() != 'csv') {
-            return response()->json(['error' => 'El archivo no es un CSV.'], 400);
+            return response()->json(['message' => 'El archivo no es un CSV.'], 400);
         }
         $csvPath = $file->getRealPath();
         $courseId = $request->course_id;
@@ -269,15 +266,14 @@ class AuthController extends Controller
         return response()->json(['success' => 'Se han insertado los usuarios correctamente.'], 200);
     }
 
-    function getAll(Request $request)
+    function getAllTeachers(Request $request)
     {
         $user = Auth::user();
         $role_id = $user->role_id;
-        $role_search = $request->role_id;
         if ($role_id == 1) {
             //get all users from database where role_id = 2
             // $users = User::where('role_id', $role_search)->get();
-            $users = User::select('name', 'surname', 'email')->where('role_id', $role_search)->get();
+            $users = User::select('name', 'surname', 'email')->where('role_id', 1)->get();
             return response()->json($users, 200);
         } else {
             return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 400);

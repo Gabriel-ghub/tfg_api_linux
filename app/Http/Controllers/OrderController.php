@@ -22,7 +22,9 @@ class OrderController extends Controller
         $user = Auth::user();
         $role_id = $user->role_id;
         if ($role_id == 1) {
-            $orders = Order::orderBy('id', 'desc')->get();
+            $orders = Order::select('orders.id', 'cars.plate','orders.date_in','orders.kilometres','orders.state','orders.name','orders.surname','orders.email', 'orders.phone',)
+                        ->join('cars', 'cars.id', '=', 'orders.car_id')
+                        ->get();
             return response()->json($orders, 200);
         } else {
             return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
@@ -154,7 +156,10 @@ class OrderController extends Controller
             if(!$car){
                 return response()->json(["message"=>"No existe ninguna orden asociada a esa matrícula","ok"=>false],404);
             }
-            $orders = $car->orders->toArray();
+            $orders = Order::select('orders.id', 'cars.plate','orders.date_in','orders.kilometres','orders.state','orders.name','orders.surname','orders.email', 'orders.phone',)
+            ->join('cars', 'cars.id', '=', 'orders.car_id')
+            ->where("cars.plate","=","$plate")
+            ->get();
             return response()->json($orders);
         }else {
             return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);

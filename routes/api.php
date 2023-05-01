@@ -28,7 +28,7 @@ use App\Http\Controllers\AnomalyController;
 
 Route::controller(AuthController::class)->group(function () {
     Route::get('me', 'me');
-    Route::get('getAll', 'getAll');
+    Route::get('getAllTeachers', 'getAllTeachers');
     Route::post('login', 'login');
     Route::post('register', 'register');
     Route::post('logout', 'logout');
@@ -62,7 +62,6 @@ Route::controller(OrderController::class)->group(function () {
     Route::get('order/{id}/details', 'getOrder');
     Route::post('order/{id}/update', 'update');
     Route::get('order/{plate}', 'getOrdersByPlate');
-
 });
 
 Route::controller(WorkController::class)->group(function () {
@@ -75,6 +74,8 @@ Route::controller(WorkController::class)->group(function () {
     Route::delete('work/delete/{id}', 'delete');
     Route::get('work/{id}/students', 'getStudents');
     Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork');
+    Route::get('works/student','getWorksByStudent');
+    Route::patch('works/change_state','changeState');
 });
 
 Route::controller(AnomalyController::class)->group(function () {
