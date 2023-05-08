@@ -181,7 +181,7 @@ class AuthController extends Controller
             
             return response()->json(
                     $responseData
-            , 400);
+            , 403);
         }
         
 
@@ -268,15 +268,9 @@ class AuthController extends Controller
 
     function getAllTeachers(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             //get all users from database where role_id = 2
             // $users = User::where('role_id', $role_search)->get();
             $users = User::select('name', 'surname', 'email')->where('role_id', 1)->get();
             return response()->json($users, 200);
-        } else {
-            return response()->json(['error' => 'No tienes permisos para realizar esta acción.'], 400);
-        }
     }
 }

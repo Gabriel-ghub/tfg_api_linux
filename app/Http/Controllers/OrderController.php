@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    //TODO: "REALIZAR MIDDLEWARE QUE VERIFIQUE QUE EL ROL DEL USUARIO SEA 1"
     public function __construct()
     {
         $this->middleware('auth:api');
@@ -19,31 +18,23 @@ class OrderController extends Controller
 
     public function showAll()
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $orders = Order::select('orders.id', 'cars.plate','orders.date_in','orders.kilometres','orders.state','orders.name','orders.surname','orders.email', 'orders.phone',)
                         ->join('cars', 'cars.id', '=', 'orders.car_id')
                         ->get();
             return response()->json($orders, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function getOrder($orderNumber)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $order = Order::where('id', $orderNumber)->first();
-            $anomalies = $order->anomalies;
+            $order->anomalies;
+            $plate = Car::where("id","=", $order->car_id)->pluck('plate')->first();
 
             if ($order) {
                 return response()->json([
                     'success' => true,
-                    'order' => $order
+                    'order' => $order,
+                    'plate'=>$plate
                 ]);
             } else {
                 return response()->json([
@@ -51,35 +42,46 @@ class OrderController extends Controller
                     'message' => 'Order not found'
                 ]);
             }
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function create(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'date_in' => 'required|date',
-                'kilometres' => 'required|string',
+                'kilometres' => 'required|integer',
                 'user_id' => 'required|integer',
                 'car_id' => 'required|integer',
                 'total' => 'required|numeric',
-                'phone' => 'required|integer'
+                'phone' => 'required|integer',
+                'name' => 'required|string|max:40',
+                'surname' => 'required|string|max:40',
+                'email' => 'required|string|max:50'
             ], [
                 'date_in.required' => 'La fecha de ingreso es requerida',
-                'kilometres.required' => 'Los kilometros son requeridos',
+                'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
                 'user_id.required' => 'El usuario que generó la orden es requerido',
                 'car_id.required' => 'El id del coche es necesario',
                 'total.required' => 'El total es requerido y debe ser numerico',
-                'phone.required' => 'El telefono es requerido y debe ser numerico'
-
+                'total.numeric' => 'El total debe ser formato numerico',
+                'kilometres.required' => 'Los kilometros son requeridos',
+                'kilometres.integer' => 'Los kilometros deben ser números',
+                'phone.required' => 'El telefono es requerido',
+                'phone.integer' => 'El telefono debe ser numerico',
+                'name.required' => 'El nombre es requerido',
+                'name.string' => 'El nombre debe ser una cadena de texto',
+                'name.max' => 'Máximo 40 caracteres',
+                'surname.required' => 'El apellido es requerido',
+                'surname.string' => 'El apellido debe ser una cadena de texto',
+                'surname.max' => 'Máximo 40 caracteres',
+                'email.required' => 'El email es requerido',
+                'email.string' => 'El email debe ser una cadena de texto',
+                'email.max' => 'Máximo 50 caracteres',
             ]);
             if ($validator->fails()) {
-                return response()->json($validator->errors(), 304);
+                return response()->json([
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 409);
             }
 
             $total = $request->total;
@@ -102,31 +104,62 @@ class OrderController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone
             ]);
-
             return response()->json(['message' => 'Post creado con exito', 'data' => $order], 201);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function update(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'kilometres' => 'integer|min:1',
+            'user_id' => 'integer',
+            'car_id' => 'integer',
+            'total' => 'numeric',
+            'phone' => 'integer|min:1',
+            'name' => 'string|max:40|min:1',
+            'surname' => 'string|max:40|min:1',
+            'email' =>'string|max:50|min:1'
+        ], [
+            'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
+            'total.numeric' => 'El total debe ser formato numerico',
+            'kilometres.integer' => 'Los kilometros deben ser números',
+            'kilometres.min' => 'Los kilometros no pueden estar vacíos',
+            'phone.integer' => 'El teléfono debe ser numerico',
+            'phone.min' => 'El teléfono no puede estar vacío',
+            'name.string' => 'El nombre debe ser una cadena de texto',
+            'name.min' => 'El nombre no puede estar vacío',
+            'name.max' => 'Máximo 40 caracteres',
+            'surname.string' => 'El apellido debe ser una cadena de texto',
+            'surname.min' => 'El apellido no puede estar vacío',
+            'surname.max' => 'Máximo 40 caracteres',
+            'email.string' => 'El email debe ser una cadena de texto',
+            'email.max' => 'Máximo 50 caracteres',
+            'email.min' => 'El email no puede estar vacío',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+
+
 
         $order = Order::findOrFail($request->id);
         if ($order) {
-            $order->update($request->all());
+            $order->name = $request->name;
+            $order->surname = $request->surname;
+            $order->phone = $request->phone;
+            $order->email = $request->email;
+            $order->kilometres = $request->kilometres;
+            $order->save();
             return response()->json(['order' => $order]);
         } else {
-            return response()->json(['No existe esa orden']);
+            return response()->json(["message"=>'No existe esa orden'], 404);
         }
     }
 
     public function delete(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'order_id' => 'required|integer',
             ]);
@@ -142,16 +175,24 @@ class OrderController extends Controller
             } else {
                 return response()->json(['message' => 'Error al encontrar la orden'], 200);
             }
-        } else {
-            return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);
-        }
     }
 
-    public function getOrdersByPlate(Request $request, $plate){
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
+    public function getOrdersByPlate(Request $request,$plate){
+        $validator = Validator::make(['plate' => $request->plate], [
+            'plate' => 'required|string|regex:/^[a-zA-Z0-9]+$/|size:11',
+        ],[
+            'plate.required' => 'La mtricula es requerida',
+            'plate.string' =>'La matrícula debe ser solo texto',
+            'plate.regex' =>'La matrícula solo puede contener números y letras',
+            'plate.size' =>'Máximo 11 carácteres',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
             $car = Car::where("plate",$plate)->first();
             if(!$car){
                 return response()->json(["message"=>"No existe ninguna orden asociada a esa matrícula","ok"=>false],404);
@@ -161,8 +202,5 @@ class OrderController extends Controller
             ->where("cars.plate","=","$plate")
             ->get();
             return response()->json($orders);
-        }else {
-            return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);
-        }
     }
 }

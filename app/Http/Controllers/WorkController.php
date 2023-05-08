@@ -19,11 +19,6 @@ class WorkController extends Controller
 
     public function create(Request $request)
     {
-
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'description' => 'required|string',
                 'order_id' => 'required|string',
@@ -45,22 +40,16 @@ class WorkController extends Controller
             ];
 
             return response()->json($returnData, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     //update work
     public function update(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'description' => 'required|string',
                 'id' => 'required|integer',
             ]);
+
             if ($validator->fails()) {
                 return response()->json($validator->errors(), 400);
             }
@@ -75,18 +64,12 @@ class WorkController extends Controller
             ];
             // $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
             return response()->json($returnData, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     //delete work
     public function delete(Request $request, $id)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
+ 
             $order_id = $request->order_id;
             $work = Work::find($id);
             $work->delete();
@@ -97,32 +80,20 @@ class WorkController extends Controller
             ];
             // $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
             return response()->json($returnData, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
 
     public function getWorksByOrderId(Request $request, $order_id)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
             return response()->json($works, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
 
 
     public function associate(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
+
         $user_id = $request->user_id;
         $work = Work::find($request->work_id);
         $user = User::find($user_id);
@@ -130,19 +101,12 @@ class WorkController extends Controller
                 $work->users()->attach($user_id);
                 return response()->json(["message" => "Creado correctamente"],200);
             }else{
-                return response()->json(["message" => "Error, usuario o trabajo no encontrado","ok"=>"false"],400);
+                return response()->json(["message" => "Error, usuario o trabajo no encontrado","ok"=>"false"],404);
             }
-        }else{
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 400);
-        }
-
     }
 
     public function disassociate(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
         $work = Work::find($request->work_id);
         $user = User::find($request->user_id);
             $response = $work->users()->detach($user->id);
@@ -151,9 +115,6 @@ class WorkController extends Controller
             }else{
                 return response()->json(["message" => "Fallo", "ok"=>"false"], 400);
             }
-        }else{
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 400);
-        }
     }
 
     public function getUsersByWorkId(Request $request)
@@ -167,9 +128,6 @@ class WorkController extends Controller
     }
 
     public function getUsersFromCourseAndWork(Request $request, $work_id, $course_id){
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $users_assigned = User::select('users.id', 'users.name', 'users.surname','users.email')
             ->join('user_work', 'users.id', '=', 'user_work.user_id')
             ->join('works', 'user_work.work_id', '=', 'works.id')
@@ -191,27 +149,17 @@ class WorkController extends Controller
                 "NOT_ASSIGNED" =>$users_not_assigned
             ];
             return response()->json($response ,200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function getStudents(Request $request,$id){
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $work = Work::find($id);
             $students_associated = $work->users()->select('name','surname','email','id')->get()->toArray(); 
             return response()->json($students_associated, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function getWorksByStudent(){
         $user = Auth::user();
         $user_id = $user->id;
-        if($user){
             $pendingWorks = Work::select('works.id','works.description','cars.plate','works.state','user_work.description as comment')
             ->join('user_work','works.id','=','user_work.work_id')
             ->join('orders','works.order_id','=','orders.id')
@@ -230,26 +178,24 @@ class WorkController extends Controller
                                     "pendientes" => $pendingWorks,
                                     "finalizados" =>$completedWorks
                                     ]);
-        }else{
-            return response()->json(['message' => 'Error al encontrar al usuario'], 400);
-        }
     }
 
     public function changeState(Request $request){
         $user = Auth::user();
         $user_id = $user->id;
-        if($user){
             $work = Work::find($request->work_id);
-            if($request->state && $user->role_id ==1){
-                $work->state = $request->state;
+            if ($work) {
+                if($request->state && $user->role_id ==1){
+                    $work->state = $request->state;
+                }else{
+                    $work->state = 1;
+                    $work->description = $request->description;
+                }
+                $work->save();
+                return response()->json(["Trabajo actualizado" => $work]);
             }else{
-                $work->state = 1;
-                $work->description = $request->description;
+                return response()->json(["message" => "El trabajo no existe"]);
             }
-            $work->save();
-            return response()->json(["Trabajo actualizado" => $work]);
-        }else{
-            return response()->json(['message' => 'Error al encontrar al usuario'], 400);
-        }
+
     }
 }

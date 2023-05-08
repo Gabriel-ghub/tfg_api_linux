@@ -16,11 +16,6 @@ class AnomalyController extends Controller
 
     public function create(Request $request)
     {
-
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'order_id' => 'required',
             ]);
@@ -39,14 +34,10 @@ class AnomalyController extends Controller
                 ]);
             }
             return response()->json([$order_id], 200);
-        }
     }
 
     public function update(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $id = $request->id;
             $description = $request->description;
             try {
@@ -61,16 +52,10 @@ class AnomalyController extends Controller
             } catch (\Exception $e) {
                 return response()->json(["mensaje" => "Ocurrió un error al actualizar la descripción de la anomalía con ID $id: " . $e->getMessage()], 500);
             }
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function destroy(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $id = $request->id;
             $anomaly = Anomaly::find($id);
             if (!$anomaly) {
@@ -78,8 +63,5 @@ class AnomalyController extends Controller
             }
             $anomaly->delete();
             return response()->json(['message' => 'Anomaly deleted successfully'], 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 }

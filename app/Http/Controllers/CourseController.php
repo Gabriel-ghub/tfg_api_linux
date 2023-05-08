@@ -18,23 +18,13 @@ class CourseController extends Controller
 
     public function index()
     {
-
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $courses = Course::All();
             return response()->json($courses, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
 
     public function show($id)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $course = Course::find($id);
 
             if (!$course) {
@@ -42,16 +32,10 @@ class CourseController extends Controller
             }
 
             return response()->json($course);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function updateCourse(Request $request, $id)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string',
                 'year' => 'required|integer',
@@ -70,42 +54,36 @@ class CourseController extends Controller
             $course->year = $request->input('year');
             $course->save();
             return response()->json(['message' => 'Course updated successfully', 'data' => $course]);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function create(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string',
                 'year' => 'required|integer',
             ], [
                 'name.required' => 'El nombre es requerido',
                 'year.required' => 'El año es requerido',
+                'name.string' => 'El nombre debe ser una cadena de texto',
+                'year.integer' => 'El año debe ser numerico',
             ]);
+
             if ($validator->fails()) {
-                return response()->json($validator->errors(), 304);
+                return response()->json([
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 409);
             }
+
             $course = Course::create([
                 "name" => $request->name,
                 "year" => $request->year,
             ]);
             return response()->json($course, 200);
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 200);
-        }
     }
 
     public function delete(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'id' => 'required|integer',
             ]);
@@ -121,18 +99,10 @@ class CourseController extends Controller
             } else {
                 return response()->json(['message' => 'Error al encontrar el curso'], 200);
             }
-        } else {
-            return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);
-        }
     }
 
     public function getStudents($id)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
-
             try {
                 // Busca el curso con el ID proporcionado
                 $curso = Course::findOrFail($id);
@@ -149,8 +119,5 @@ class CourseController extends Controller
                 // En caso de error, devuelve una respuesta de error con el mensaje del error
                 return response()->json(['error' => $e->getMessage()], 500);
             }
-        } else {
-            return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);
-        }
     }
 }

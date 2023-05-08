@@ -19,9 +19,21 @@ class CarController extends Controller
 
     public function search(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-        if ($role_id == 1) {
+        $validator = Validator::make(['plate' => $request->plate], [
+            'plate' => 'required|string|regex:/^[a-zA-Z0-9]+$/|max:11',
+        ],[
+            'plate.required' => 'La mtricula es requerida',
+            'plate.string' =>'La matrícula debe ser solo texto',
+            'plate.regex' =>'La matrícula solo puede contener números y letras',
+            'plate.size' =>'Máximo 11 carácteres',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
             $car = Car::where('plate', $request->get("plate"))->first();
             if ($car) {
                 return response()->json($car, 200);
@@ -31,27 +43,28 @@ class CarController extends Controller
                     'message' => 'Coche no encontrado'
                 ], 404));
             }
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 400);
-        }
     }
 
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
-                'plate' => 'required|string|unique:cars',
-                'brand' => 'required|string',
-                'model' => 'required|string',
+                'plate' => 'required|string|unique:cars|max:11',
+                'brand' => 'required|string|max:30',
+                'model' => 'required|string|max:30',
             ], [
                 'plate.required' => 'La placa es requerida',
                 'plate.unique' => 'Ya existe un coche con esa placa',
                 'brand.required' => 'La marca es requerida',
                 'model.required' => 'El modelo es requerido',
+
+                'plate.string' => 'La matricula debe ser tipo texto',
+                'brand.string' => 'La marca debe ser tipo texto',
+                'model.string' => 'El modelo debe ser tipo texto',
+
+                'plate.max' => 'Máximo 11 carácteres',
+                'brand.max' => 'Máximo 30 carácteres',
+                'model.max' => 'Máximo 30 carácteres',            
             ]);
 
             // Si hay errores, devolver la respuesta con los errores
@@ -68,19 +81,11 @@ class CarController extends Controller
 
             // Devolver una respuesta con el coche creado
             return response()->json(['car' => $car], 201);
-
-        } else {
-            return response()->json(['message' => 'No tiene permisos para realizar esta acción'], 402);
-        }
     }
 
 
     public function modify(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'plate' => 'required|string',
                 'brand' => 'required|string',
@@ -102,17 +107,10 @@ class CarController extends Controller
             } else {
                 return response()->json(['message' => 'Error al encontrar el coche'], 200);
             }
-        } else {
-            return response()->json(['message' => 'PASA ALGO RARO'], 200);
-        }
     }
 
     public function delete(Request $request)
     {
-        $user = Auth::user();
-        $role_id = $user->role_id;
-
-        if ($role_id == 1) {
             $validator = Validator::make($request->all(), [
                 'plate' => 'required|string',
                 'id_car' => 'required',
@@ -129,8 +127,5 @@ class CarController extends Controller
             } else {
                 return response()->json(['message' => 'Error al encontrar el coche'], 200);
             }
-        } else {
-            return response()->json(['message' => 'No está autorizado a realizar esta acción'], 200);
-        }
     }
 }
