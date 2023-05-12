@@ -109,31 +109,35 @@ class OrderController extends Controller
 
     public function update(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'kilometres' => 'integer|min:1',
-            'user_id' => 'integer',
-            'car_id' => 'integer',
-            'total' => 'numeric',
-            'phone' => 'integer|min:1',
-            'name' => 'string|max:40|min:1',
-            'surname' => 'string|max:40|min:1',
-            'email' =>'string|max:50|min:1'
+        $validator = Validator::make($data, [
+            'name' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
+            'surname' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
+            'username' => ['required', 'string', 'unique:users,username', 'min:3', 'max:20'],
+            'email' => ['required', 'string', 'email', 'unique:users,email', 'max:50'],
+            'course_id' => ['required', 'exists:courses,id']
         ], [
-            'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
-            'total.numeric' => 'El total debe ser formato numerico',
-            'kilometres.integer' => 'Los kilometros deben ser números',
-            'kilometres.min' => 'Los kilometros no pueden estar vacíos',
-            'phone.integer' => 'El teléfono debe ser numerico',
-            'phone.min' => 'El teléfono no puede estar vacío',
-            'name.string' => 'El nombre debe ser una cadena de texto',
-            'name.min' => 'El nombre no puede estar vacío',
-            'name.max' => 'Máximo 40 caracteres',
-            'surname.string' => 'El apellido debe ser una cadena de texto',
-            'surname.min' => 'El apellido no puede estar vacío',
-            'surname.max' => 'Máximo 40 caracteres',
-            'email.string' => 'El email debe ser una cadena de texto',
-            'email.max' => 'Máximo 50 caracteres',
-            'email.min' => 'El email no puede estar vacío',
+            'name.required' => 'El campo nombre es obligatorio.',
+            'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
+            'name.regex' => 'El campo nombre solo puede contener letras.',
+            'name.min' => 'El campo nombre debe tener al menos 3 caracteres.',
+            'name.max' => 'El campo nombre no puede tener más de 40 caracteres.',
+            'surname.required' => 'El campo apellido es obligatorio.',
+            'surname.string' => 'El campo apellido debe ser una cadena de caracteres.',
+            'surname.regex' => 'El campo apellido solo puede contener letras.',
+            'surname.min' => 'El campo apellido debe tener al menos 3 caracteres.',
+            'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
+            'username.required' => 'El campo username es obligatorio.',
+            'username.string' => 'El campo username debe ser una cadena de caracteres.',
+            'username.unique' => 'Este nombre de usuario ya está en uso por otro usuario.',
+            'username.min' => 'El campo username debe tener al menos 3 caracteres.',
+            'username.max' => 'El campo username no puede tener más de 20 caracteres.',
+            'email.required' => 'El campo correo electrónico es obligatorio.',
+            'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
+            'email.email' => 'El campo correo electrónico debe ser una dirección de correo válida.',
+            'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
+            'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
+            'course_id.required' => 'El campo course_id es obligatorio.',
+            'course_id.exists' => 'El curso seleccionado no existe.'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -179,12 +183,12 @@ class OrderController extends Controller
 
     public function getOrdersByPlate(Request $request,$plate){
         $validator = Validator::make(['plate' => $request->plate], [
-            'plate' => 'required|string|regex:/^[a-zA-Z0-9]+$/|size:11',
+            'plate' => 'required|string|regex:/^[a-zA-Z0-9]+$/|max:11',
         ],[
             'plate.required' => 'La mtricula es requerida',
             'plate.string' =>'La matrícula debe ser solo texto',
             'plate.regex' =>'La matrícula solo puede contener números y letras',
-            'plate.size' =>'Máximo 11 carácteres',
+            'plate.max' =>'Máximo 11 carácteres',
         ]);
         
         if ($validator->fails()) {

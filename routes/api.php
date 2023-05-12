@@ -34,11 +34,11 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('logout', 'logout');
     Route::post('refresh', 'refresh');
-    Route::post('user/createCSV', 'createStudentsFromCSV')->middleware('role');;
-    Route::post('user/createStudent', 'createStudent')->middleware('role');;
+    Route::post('user/createCSV', 'createCSV2')->middleware('role');
+    Route::post('user/createStudent', 'createStudent')->middleware('role');
+    Route::post('user/createTeacher', 'createTeacher')->middleware('role');
     Route::post('verify_token', 'verifyToken');
-    Route::get('teachers', 'getAllTeachers')->middleware('role');;
-    
+    Route::get('teachers', 'getAllTeachers')->middleware('role');
 });
 
 
@@ -79,7 +79,7 @@ Route::controller(WorkController::class)->group(function () {
     Route::get('work/{id}/students', 'getStudents')->middleware('role');
     Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
     Route::get('works/student','getWorksByStudent');
-    Route::patch('works/change_state','changeState');
+    Route::patch('works/change_state','changeState2');
 });
 
 Route::controller(AnomalyController::class)->group(function () {

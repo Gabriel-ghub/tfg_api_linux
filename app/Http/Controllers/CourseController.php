@@ -19,7 +19,11 @@ class CourseController extends Controller
     public function index()
     {
             $courses = Course::All();
-            return response()->json($courses, 200);
+            if($courses){
+                return response()->json($courses, 200);
+            }else{
+                return response()->json(["message" =>"No hay cursos","errors" =>"No hay cursos"], 200);
+            }
     }
 
 
@@ -58,15 +62,17 @@ class CourseController extends Controller
 
     public function create(Request $request)
     {
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string',
-                'year' => 'required|integer',
-            ], [
-                'name.required' => 'El nombre es requerido',
-                'year.required' => 'El año es requerido',
-                'name.string' => 'El nombre debe ser una cadena de texto',
-                'year.integer' => 'El año debe ser numerico',
-            ]);
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|min:1',
+            'year' => 'required|integer|min:1',
+        ], [
+            'name.required' => 'El nombre es requerido.',
+            'year.required' => 'El año es requerido.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'year.integer' => 'El año debe ser un número entero.',
+            'name.min' => 'El nombre debe tener al menos un caracter.',
+            'year.min' => 'El año debe tener al menos un caracter.',
+        ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -84,13 +90,20 @@ class CourseController extends Controller
 
     public function delete(Request $request)
     {
-            $validator = Validator::make($request->all(), [
-                'id' => 'required|integer',
-            ]);
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
-            }
-
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:courses,id',
+        ], [
+            'id.required' => 'El id es requerido',
+            'id.integer' => 'El id debe ser un número entero',
+            'id.exists' => 'El id no es válido',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
             $course = Course::find($request->id);
 
             if ($course) {

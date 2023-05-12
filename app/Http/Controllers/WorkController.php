@@ -45,14 +45,25 @@ class WorkController extends Controller
     //update work
     public function update(Request $request)
     {
-            $validator = Validator::make($request->all(), [
-                'description' => 'required|string',
-                'id' => 'required|integer',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
-            }
+        $validator = Validator::make($request->all(), [
+            'description' => 'required|string|min:2|max:200',
+            'id' => 'required|integer|exists:trabajos,id',
+        ], [
+            'description.required' => 'El campo descripción es obligatorio.',
+            'description.string' => 'El campo descripción debe ser una cadena de caracteres.',
+            'description.min' => 'El campo descripción debe tener al menos :min caracteres.',
+            'description.max' => 'El campo descripción no debe tener más de :max caracteres.',
+            'id.required' => 'El campo ID es obligatorio.',
+            'id.integer' => 'El campo ID debe ser un número entero.',
+            'id.exists' => 'El ID especificado no existe en la tabla trabajos.',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
             $order_id = $request->order_id;
             $work = Work::find($request->id);
             $work->description = $request->description;
@@ -67,20 +78,28 @@ class WorkController extends Controller
     }
 
     //delete work
-    public function delete(Request $request, $id)
-    {
- 
-            $order_id = $request->order_id;
-            $work = Work::find($id);
-            $work->delete();
-            $returnData = [
-                'id' => $work->id,
-                'description' => $work->description,    
-                'order' => $work->order_id,
-            ];
-            // $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
-            return response()->json($returnData, 200);
+public function delete(Request $request, $id)
+{
+
+    $work = Work::find($id);
+
+    if (!$work) {
+        return response()->json([
+            'message' => 'Validation error',
+            'errors' => ['id' => 'El trabajo no existe']
+        ], 409);
     }
+
+    $work->delete();
+
+    $returnData = [
+        'id' => $work->id,
+        'description' => $work->description,    
+        'order' => $work->order_id,
+    ];
+
+    return response()->json($returnData, 200);
+}
 
 
     public function getWorksByOrderId(Request $request, $order_id)
@@ -183,19 +202,79 @@ class WorkController extends Controller
     public function changeState(Request $request){
         $user = Auth::user();
         $user_id = $user->id;
-            $work = Work::find($request->work_id);
-            if ($work) {
-                if($request->state && $user->role_id ==1){
-                    $work->state = $request->state;
-                }else{
-                    $work->state = 1;
-                    $work->description = $request->description;
-                }
-                $work->save();
+        $work = Work::find($request->work_id);
+        if ($work){
+            if($request->state && $user->role_id ==1){
+                $work->state = $request->state;
+        }else{
+            $work->state = 1;
+            $work->description = $request->description;
+        }
+        $work->save();
                 return response()->json(["Trabajo actualizado" => $work]);
             }else{
                 return response()->json(["message" => "El trabajo no existe"]);
             }
-
     }
+
+    public function changeState2(Request $request)
+{
+    $user = Auth::user();
+    $user_id = $user->id;
+    $validator = Validator::make($request->all(), [
+        'work_id' => 'required|exists:works,id',
+    ]);
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation error',
+            'errors' => $validator->errors()
+        ], 409);
+    }
+    $work = Work::find($request->work_id);
+    if (!$work) {
+        return response()->json(["message" => "El trabajo no existe"]);
+    }
+    if ($user->role_id == 1) {
+        $validator = Validator::make($request->all(), [
+            'state' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+        $work->state = $request->state;
+        $work->save();
+    } else if ($user->role_id == 2) {
+        $validator = Validator::make($request->all(), [
+            'description' => 'required|string|min:1|max:150',
+        ], [
+            'description.required' => 'La descripción es requerida',
+            'description.string' => 'La descripción debe ser un texto',
+            'description.min' => 'La descripción debe tener al menos :min caracteres',
+            'description.max' => 'La descripción no debe tener más de :max caracteres',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+        
+        $user = User::find($user_id);
+        $work_id = Work::find($work->id);
+        
+        $changed_description = $user->works()->updateExistingPivot($work_id, ['description' => $request->description]);
+        if ($changed_description) {
+            $work->state = 1;
+            $work->save();
+            return response()->json(["Trabajo actualizado" => $work], 200);
+        } else {
+            return response()->json(["message" => "No se pudo actualizar la descripción"], 409);
+        }
+    }
+    return response()->json(["Trabajo actualizado" => $work]);
+}
 }
