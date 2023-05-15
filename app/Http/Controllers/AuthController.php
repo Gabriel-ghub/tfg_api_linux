@@ -407,8 +407,7 @@ class AuthController extends Controller
             if ($validator->fails()) {
                 // Si falla la validación, agregamos el error al arreglo de errores
                 $errors[] = [
-                    'email' => $email,
-                    'message' => $validator->errors()->first('email')
+                    'message' => "$email ".$validator->errors()->first('email')
                 ];
                 continue;
             }

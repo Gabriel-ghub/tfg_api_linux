@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Car;
 use App\Models\User;
+use App\Models\Work;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -38,5 +39,10 @@ class Order extends Model
     public function anomalies()
     {
         return $this->hasMany(Anomaly::class);
+    }
+
+    public function works()
+    {
+        return $this->hasMany(Work::class);
     }
 }

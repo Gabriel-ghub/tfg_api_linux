@@ -49,9 +49,8 @@ class OrderController extends Controller
             $validator = Validator::make($request->all(), [
                 'date_in' => 'required|date',
                 'kilometres' => 'required|integer',
-                'user_id' => 'required|integer',
                 'car_id' => 'required|integer',
-                'total' => 'required|numeric',
+                // 'total' => 'required|numeric',
                 'phone' => 'required|integer',
                 'name' => 'required|string|max:40',
                 'surname' => 'required|string|max:40',
@@ -59,10 +58,9 @@ class OrderController extends Controller
             ], [
                 'date_in.required' => 'La fecha de ingreso es requerida',
                 'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
-                'user_id.required' => 'El usuario que generó la orden es requerido',
                 'car_id.required' => 'El id del coche es necesario',
-                'total.required' => 'El total es requerido y debe ser numerico',
-                'total.numeric' => 'El total debe ser formato numerico',
+                // 'total.required' => 'El total es requerido y debe ser numerico',
+                // 'total.numeric' => 'El total debe ser formato numerico',
                 'kilometres.required' => 'Los kilometros son requeridos',
                 'kilometres.integer' => 'Los kilometros deben ser números',
                 'phone.required' => 'El telefono es requerido',
@@ -91,13 +89,15 @@ class OrderController extends Controller
 
             // Convertir el total a formato de coma flotante con punto como separador decimal
             $total = str_replace(',', '.', $total);
+            $user = Auth::user();
+            $user_id = $user->id;
 
             $order = Order::create([
                 'date_in' => $request->date_in,
                 'kilometres' => $request->kilometres,
-                'state' => $request->state,
-                'total' => $total,
-                'user_id' => $request->user_id,
+                'state' => "En proceso",
+                'total' => 0,
+                'user_id' => $user_id,
                 'car_id' => $request->car_id,
                 'name' => $request->name,
                 'surname' => $request->surname,
@@ -109,12 +109,10 @@ class OrderController extends Controller
 
     public function update(Request $request)
     {
-        $validator = Validator::make($data, [
+        $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
             'surname' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
-            'username' => ['required', 'string', 'unique:users,username', 'min:3', 'max:20'],
             'email' => ['required', 'string', 'email', 'unique:users,email', 'max:50'],
-            'course_id' => ['required', 'exists:courses,id']
         ], [
             'name.required' => 'El campo nombre es obligatorio.',
             'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
@@ -126,18 +124,11 @@ class OrderController extends Controller
             'surname.regex' => 'El campo apellido solo puede contener letras.',
             'surname.min' => 'El campo apellido debe tener al menos 3 caracteres.',
             'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
-            'username.required' => 'El campo username es obligatorio.',
-            'username.string' => 'El campo username debe ser una cadena de caracteres.',
-            'username.unique' => 'Este nombre de usuario ya está en uso por otro usuario.',
-            'username.min' => 'El campo username debe tener al menos 3 caracteres.',
-            'username.max' => 'El campo username no puede tener más de 20 caracteres.',
             'email.required' => 'El campo correo electrónico es obligatorio.',
             'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
             'email.email' => 'El campo correo electrónico debe ser una dirección de correo válida.',
             'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
             'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
-            'course_id.required' => 'El campo course_id es obligatorio.',
-            'course_id.exists' => 'El curso seleccionado no existe.'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -206,5 +197,19 @@ class OrderController extends Controller
             ->where("cars.plate","=","$plate")
             ->get();
             return response()->json($orders);
+    }
+
+    public function closeOrder(Request $request, $order_id){
+        $order = Order::find($order_id);
+        $works = $order->works;
+        if($works){
+            foreach ($works as $work) {
+                $work->state = true;
+                $work->save();
+            }
+        }
+        $order->state= "Finalizada";
+        $order->save(); 
+        return response()->json(["message"=>"Orden cerrada correctamente, se han cerrado todos sus trabajos"],200);
     }
 }

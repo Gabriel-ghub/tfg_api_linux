@@ -65,7 +65,7 @@ Route::controller(OrderController::class)->group(function () {
     Route::get('order/{id}/details', 'getOrder')->middleware('role');
     Route::post('order/{id}/update', 'update')->middleware('role');
     Route::get('order/{plate}', 'getOrdersByPlate')->middleware('role');
-
+    Route::put('order/close/{order_id}', 'closeOrder')->middleware('role');
 });
 
 Route::controller(WorkController::class)->group(function () {
@@ -80,6 +80,8 @@ Route::controller(WorkController::class)->group(function () {
     Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
     Route::get('works/student','getWorksByStudent');
     Route::patch('works/change_state','changeState2');
+    Route::get('works/{id}','getWorkDetails');
+
 });
 
 Route::controller(AnomalyController::class)->group(function () {
