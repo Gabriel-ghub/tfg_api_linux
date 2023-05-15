@@ -38,7 +38,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function orders()
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Order::class, 'creator_user_id');
     }
 
     public function works()
@@ -55,6 +55,12 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Course::class);
     }
+
+    public function assignedOrders()
+{
+    return $this->belongsToMany(Order::class, 'order_user', 'user_id', 'order_id')->withTimestamps();
+}
+
 
 
 

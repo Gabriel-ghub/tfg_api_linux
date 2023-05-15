@@ -15,7 +15,8 @@ class Work extends Model
         'description',
         'hours',
         'state',
-        'order_id'
+        'order_id',
+        'user_id'
     ];
 
     public function users()

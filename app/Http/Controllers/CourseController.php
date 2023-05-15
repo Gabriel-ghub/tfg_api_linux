@@ -121,8 +121,7 @@ class CourseController extends Controller
                 $curso = Course::findOrFail($id);
 
                 // Obtiene una lista de los alumnos asociados al curso
-                $alumnos = $curso->users()->select('id', 'name', 'surname', 'email',
-                    'username'
+                $alumnos = $curso->users()->select('id', 'name', 'surname', 'email'
                 )->get()->toArray();
 
                 

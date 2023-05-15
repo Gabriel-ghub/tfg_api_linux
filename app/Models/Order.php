@@ -18,7 +18,7 @@ class Order extends Model
         'kilometres',
         'state',
         'total',
-        'user_id',
+        'creator_user_id',
         'car_id',
         'name',
         'surname',
@@ -44,5 +44,15 @@ class Order extends Model
     public function works()
     {
         return $this->hasMany(Work::class);
+    }
+
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'order_user', 'order_id', 'user_id')->withTimestamps();
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class);
     }
 }

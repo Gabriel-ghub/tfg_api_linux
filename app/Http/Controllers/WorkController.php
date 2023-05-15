@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\User;
 use App\Models\Work;
 use Illuminate\Http\Request;
@@ -104,8 +105,11 @@ class WorkController extends Controller
 
     public function getWorksByOrderId(Request $request, $order_id)
     {
-        $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
+        $order = Order::find($order_id);
+        // $works = Work::select('description','id')->where('order_id', $order_id)->get()->toArray();
+        $works = $order->works;
         return response()->json($works, 200);
+
     }
 
 

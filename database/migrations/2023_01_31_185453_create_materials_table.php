@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('description');
             $table->string('price');
             $table->string('quantity');
-            $table->unsignedBigInteger('work_id');
-            $table->foreign('work_id')->references('id')->on('works')->onDelete('cascade')->onUpdate('cascade');
+            $table->unsignedBigInteger('order_id');
+            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

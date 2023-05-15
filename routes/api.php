@@ -66,6 +66,13 @@ Route::controller(OrderController::class)->group(function () {
     Route::post('order/{id}/update', 'update')->middleware('role');
     Route::get('order/{plate}', 'getOrdersByPlate')->middleware('role');
     Route::put('order/close/{order_id}', 'closeOrder')->middleware('role');
+    Route::get('order/{order_id}/students', 'getStudents')->middleware('role');
+    Route::post('order/attach', 'associate')->middleware('role');
+    Route::patch('order/dettach', 'disassociate')->middleware('role');
+    Route::get('order/{order_id}/course/{course_id}', 'getUsersFromCourseAndOrder')->middleware('role');
+    Route::get('orders/student', 'getOrdersFormStudent');
+    Route::put('orders/update/materialsandwork', 'updateMaterialsAndWork');
+    Route::get('orders/worksandmaterials/{order_id}', 'getWorksAndMaterials');
 });
 
 Route::controller(WorkController::class)->group(function () {
@@ -73,15 +80,14 @@ Route::controller(WorkController::class)->group(function () {
     Route::post('work/attach', 'associate')->middleware('role');
     Route::patch('work/dettach', 'disassociate')->middleware('role');
     Route::post('work/users', 'getUsersByWorkId')->middleware('role');
-    Route::get('work/{order_id}', 'getWorksByOrderId')->middleware('role');
+    Route::get('works/{order_id}', 'getWorksByOrderId')->middleware('role');
     Route::put('work/update', 'update')->middleware('role');
     Route::delete('work/delete/{id}', 'delete')->middleware('role');
     Route::get('work/{id}/students', 'getStudents')->middleware('role');
     Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
-    Route::get('works/student','getWorksByStudent');
-    Route::patch('works/change_state','changeState2');
-    Route::get('works/{id}','getWorkDetails');
-
+    Route::get('works/student', 'getWorksByStudent');
+    Route::patch('works/change_state', 'changeState2');
+    // Route::get('works/{id}','getWorkDetails');
 });
 
 Route::controller(AnomalyController::class)->group(function () {
