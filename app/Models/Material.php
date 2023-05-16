@@ -12,7 +12,7 @@ class Material extends Model
         'order_id',
         'description',
         'price',
-        'quantity',
+        'quantity'
     ];
 
     public function order()

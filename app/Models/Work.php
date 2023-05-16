@@ -13,8 +13,6 @@ class Work extends Model
 
     protected $fillable = [
         'description',
-        'hours',
-        'state',
         'order_id',
         'user_id'
     ];

@@ -442,7 +442,7 @@ class OrderController extends Controller
             ->where('order_id', $order_id)
             ->get();
 
-        $materials = Material::select('id', 'description')
+        $materials = Material::select('id', 'description','quantity')
             ->where('order_id', $order_id)
             ->get();
 

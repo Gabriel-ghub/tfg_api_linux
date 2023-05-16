@@ -9,6 +9,7 @@ use App\Http\Controllers\WorkController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\AnomalyController;
+use App\Http\Controllers\MaterialController;
 use App\Http;
 
 /*
@@ -82,11 +83,12 @@ Route::controller(WorkController::class)->group(function () {
     Route::post('work/users', 'getUsersByWorkId')->middleware('role');
     Route::get('works/{order_id}', 'getWorksByOrderId')->middleware('role');
     Route::put('work/update', 'update')->middleware('role');
-    Route::delete('work/delete/{id}', 'delete')->middleware('role');
+    Route::delete('work/delete/{id}', 'deleteWork');
     Route::get('work/{id}/students', 'getStudents')->middleware('role');
     Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
     Route::get('works/student', 'getWorksByStudent');
     Route::patch('works/change_state', 'changeState2');
+    Route::post('work/student/create', 'createByStudent');
     // Route::get('works/{id}','getWorkDetails');
 });
 
@@ -94,4 +96,21 @@ Route::controller(AnomalyController::class)->group(function () {
     Route::post('anomaly/create', 'create')->middleware('role');
     Route::post('anomaly/update', 'update')->middleware('role');
     Route::post('anomaly/destroy', 'destroy')->middleware('role');
+});
+
+
+Route::controller(MaterialController::class)->group(function () {
+    // Route::post('work/create', 'create')->middleware('role');
+    // Route::post('work/attach', 'associate')->middleware('role');
+    // Route::patch('work/dettach', 'disassociate')->middleware('role');
+    // Route::post('work/users', 'getUsersByWorkId')->middleware('role');
+    // Route::get('works/{order_id}', 'getWorksByOrderId')->middleware('role');
+    // Route::put('work/update', 'update')->middleware('role');
+    Route::delete('material/delete/{id}', 'deleteMaterial');
+    Route::post('material', 'createMaterial');
+    // Route::get('work/{id}/students', 'getStudents')->middleware('role');
+    // Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
+    // Route::get('works/student', 'getWorksByStudent');
+    // Route::patch('works/change_state', 'changeState2');
+    // Route::get('works/{id}','getWorkDetails');
 });

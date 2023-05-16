@@ -102,6 +102,30 @@ class WorkController extends Controller
         return response()->json($returnData, 200);
     }
 
+    public function deleteWork(Request $request, $id)
+    {
+        // Validar que el ID del trabajo exista
+        $validator = Validator::make(
+            ['id' => $id],
+            ['id' => 'required|exists:works,id'],
+            ['id.exists' => 'El trabajo no existe.']
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+
+        // Realizar la lógica de eliminación del trabajo
+        $trabajo = Work::find($id);
+        $trabajo->delete();
+
+        // Retornar una respuesta exitosa
+        return response()->json(['message' => 'Trabajo eliminado correctamente']);
+    }
+
 
     public function getWorksByOrderId(Request $request, $order_id)
     {
@@ -301,5 +325,27 @@ class WorkController extends Controller
         } else {
             return response()->json(["message" => "No se encontró ningún trabajo con ese id"], 409);
         }
+    }
+
+    public function createByStudent(Request $request){
+        $user = Auth::user();
+        $user_id = $user->id;
+        $validator = Validator::make($request->all(), [
+            'description' => 'required|string',
+            'order_id' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $work = Work::create([
+            'description' => $request->description,
+            'order_id' => $request->order_id,
+            'user_id' => $user_id,
+        ]);
+
+        $works = Order::find($request->order_id)->works;
+
+        return response()->json($works, 200);
     }
 }
