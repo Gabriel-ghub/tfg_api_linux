@@ -438,13 +438,21 @@ class OrderController extends Controller
 
     public function getWorksAndMaterials(Request $request, $order_id)
     {
+        $user = Auth::user();
+        
+        
         $works = Work::select('id', 'description')
             ->where('order_id', $order_id)
             ->get();
-
+        if($user->roleid == 1){
         $materials = Material::select('id', 'description','quantity')
             ->where('order_id', $order_id)
             ->get();
+        }else{
+            $materials = Material::select('id', 'description','quantity','price')
+            ->where('order_id', $order_id)
+            ->get();
+        }
 
         return response()->json([
             'works' => $works,

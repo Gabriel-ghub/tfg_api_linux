@@ -35,8 +35,10 @@ class MaterialController extends Controller
     public function createMaterial(Request $request)
     {
         // Validar los datos de entrada con mensajes personalizados
-         // Validar los datos de entrada con mensajes personalizados
-         $validator = Validator::make($request->all(), [
+        // Validar los datos de entrada con mensajes personalizados
+
+
+        $validator = Validator::make($request->all(), [
             'description' => 'required|string',
             'order_id' => 'required|exists:orders,id',
             'quantity' => 'integer|min:1',
@@ -54,18 +56,43 @@ class MaterialController extends Controller
                 'errors' => $validator->errors()
             ], 409);
         }
-       // Crear el nuevo material
-       $material = new Material();
-       $material->description = $request->description;
-       $material->order_id = $request->order_id;
-       $material->quantity = $request->quantity;
-       $material->save();
+        // Crear el nuevo material
+        $material = new Material();
+        $material->description = $request->description;
+        $material->order_id = $request->order_id;
+        $material->quantity = $request->quantity;
+        $material->save();
 
-       // Obtener todos los trabajos asociados a la orden
-       $order = Order::findOrFail($request->order_id);
-       $materials = $order->materials;
+        // Obtener todos los trabajos asociados a la orden
+        $order = Order::findOrFail($request->order_id);
+        $materials = $order->materials;
 
-       // Retornar una respuesta con los trabajos asociados a la orden
-       return response()->json($materials,200);
+        // Retornar una respuesta con los trabajos asociados a la orden
+        return response()->json($materials, 200);
+    }
+
+    public function updateMaterialPrice(Request $request)
+    {
+        // Validación de los datos recibidos
+        $validator = Validator::make($request->all(), [
+            'material_id' => 'required|exists:materials,id',
+            'price' => 'required|numeric|min:0'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+
+        // Obtener el material
+        $material = Material::find($request->material_id);
+
+        // Actualizar el precio del material
+        $material->price = $request->price;
+        $material->save();
+
+        return response()->json($material, 200);
     }
 }

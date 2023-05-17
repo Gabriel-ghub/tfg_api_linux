@@ -108,6 +108,7 @@ Route::controller(MaterialController::class)->group(function () {
     // Route::put('work/update', 'update')->middleware('role');
     Route::delete('material/delete/{id}', 'deleteMaterial');
     Route::post('material', 'createMaterial');
+    Route::put('material', 'updateMaterialPrice')->middleware('role');
     // Route::get('work/{id}/students', 'getStudents')->middleware('role');
     // Route::get('work/{work_id}/course/{course_id}', 'getUsersFromCourseAndWork')->middleware('role');
     // Route::get('works/student', 'getWorksByStudent');
