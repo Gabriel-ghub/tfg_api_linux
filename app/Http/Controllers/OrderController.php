@@ -208,14 +208,14 @@ class OrderController extends Controller
     public function closeOrder(Request $request, $order_id)
     {
         $order = Order::find($order_id);
-        $works = $order->works;
-        if ($works) {
-            foreach ($works as $work) {
-                $work->state = true;
-                $work->save();
-            }
-        }
-        $order->state = "Finalizada";
+        // $works = $order->works;
+        // if ($works) {
+        //     foreach ($works as $work) {
+        //         $work->state = true;
+        //         $work->save();
+        //     }
+        // }
+        $order->state = 1;
         $order->save();
         return response()->json(["message" => "Orden cerrada correctamente, se han cerrado todos sus trabajos"], 200);
     }
@@ -286,56 +286,6 @@ class OrderController extends Controller
 
     public function getOrdersFormStudent(Request $request)
     {
-        // $user = Auth::user();
-        // $user_id = $user->id;
-
-        // $orders = Order::select('orders.id', 'cars.plate', 'orders.state')
-        //                 ->join('cars', 'orders.car_id', '=', 'cars.id')
-        //                 ->join('order_user', 'order_user.order_id', '=', 'orders.id')
-        //                 ->whereIn('orders.state', [0, 1])
-        //                 ->where('order_user.user_id', '=', $user_id)
-        //                 ->get();
-
-        // if ($orders->isEmpty()) {
-        //     return response()->json(['message' => 'No se encontraron órdenes asociadas al usuario'], 404);
-        // }
-
-        // list($finishedOrders, $pendingOrders) = $orders->partition(function ($order) {
-        //     return $order->state == 1;
-        // });
-
-        // $finishedResults = [];
-        // foreach ($finishedOrders as $order) {
-        //     $anomalies = Anomaly::select('description')
-        //                     ->where('order_id', $order->id)
-        //                     ->get()
-        //                     ->pluck('description');
-
-        //     $finishedResults[] = [
-        //         'id' => $order->id,
-        //         'plate' => $order->plate,
-        //         'anomalies' => $anomalies->toArray()
-        //     ];
-        // }
-
-        // $pendingResults = [];
-        // foreach ($pendingOrders as $order) {
-        //     $anomalies = Anomaly::select('description')
-        //                     ->where('order_id', $order->id)
-        //                     ->get()
-        //                     ->pluck('description');
-
-        //     $pendingResults[] = [
-        //         'id' => $order->id,
-        //         'plate' => $order->plate,
-        //         'anomalies' => $anomalies->toArray()
-        //     ];
-        // }
-
-        // return response()->json([
-        //     'finished' => $finishedResults,
-        //     'pending' => $pendingResults
-        // ]);
         $user = Auth::user();
         $user_id = $user->id;
 
@@ -457,6 +407,30 @@ class OrderController extends Controller
         return response()->json([
             'works' => $works,
             'materials' => $materials
+        ]);
+    }
+
+    public function getDataToPDF(Request $request, $order_id){
+        $order = Order::select('date_in', 'date_out', 'kilometres', 'name', 'surname', 'phone', 'email','car_id')->find($order_id);
+        $anomalies = Anomaly::select('description')
+            ->where('order_id', $order_id)
+            ->get()
+            ->pluck('description');
+        $materials = Material::select('description',"price","quantity")->where('order_id', $order_id)->get()->toArray();
+        $work = Work::select('description')->where('order_id', $order_id)->get()->pluck('description');
+        $car = Car::select("brand", "model","plate")->where('id',$order->car_id)->get()->toArray();
+        //get users asssiagned to order
+        $students = Order::find($order_id)->assignedUsers()->get()->map(function ($user) {
+                return $user->name . ' ' . $user->surname;
+            });
+
+        return response()->json([
+            'order' => $order,
+            'anomalies' => $anomalies,
+            'materials' => $materials,
+            'works' => $work,
+            'car' => $car,
+            'students' => $students
         ]);
     }
 }

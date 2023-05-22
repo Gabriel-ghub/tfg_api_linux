@@ -456,4 +456,61 @@ class AuthController extends Controller
         return response()->json(['success' => 'Se han insertado los usuarios correctamente.', 'students' => $studentsArray],200);
     
     }
+
+    public function getUserById(Request $request , $id){
+        //select only name, surname,email, id and course_id
+        $user = User::select('name', 'surname', 'email', 'id', 'course_id')->where('id', $id)->first();
+        if (!$user) {
+            return response()->json(['message' => 'No se ha encontrado el estudiante.'], 404);
+        }
+        return response()->json($user, 200);
+    }
+
+    public function update(Request $request){
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:40',
+            'surname' => 'required|string|max:40',
+            'email' => 'required|string|max:50|unique:users|regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
+            'id' => 'required|exists:users,id',
+            'course_id' => 'required|exists:courses,id'
+        ], [
+            'name.required' => 'El campo nombre es obligatorio.',
+            'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
+            'name.max' => 'El campo nombre no puede tener más de 40 caracteres.',
+            'surname.required' => 'El campo apellido es obligatorio.',
+            'surname.string' => 'El campo apellido debe ser una cadena de caracteres.',
+            'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
+            'email.required' => 'El campo correo electrónico es obligatorio.',
+            'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
+            'email.regex' => 'El campo correo electrónico debe ser una dirección de correo válida.',
+            'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
+            'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
+            'id.required' => 'El campo id es obligatorio.',
+            'id.exists' => 'El id no existe en la base de datos.',
+            'course_id.required' => 'El campo id de curso es obligatorio.',
+            'course_id.exists' => 'El id de curso no existe en la base de datos.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['message' => 'No se ha encontrado el estudiante.'], 404);
+        }
+
+        $user->name = $request->name;
+        $user->surname = $request->surname;
+        $user->email = $request->email;
+        $user->course_id = $request->course_id;
+
+        $user->save();
+
+        return response()->json(['message' => 'Usuario actualizado correctamente.'], 200);
+    }
+
 }

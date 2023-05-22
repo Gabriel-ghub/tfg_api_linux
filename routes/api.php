@@ -40,6 +40,8 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('user/createTeacher', 'createTeacher')->middleware('role');
     Route::post('verify_token', 'verifyToken');
     Route::get('teachers', 'getAllTeachers')->middleware('role');
+    Route::get('user/{id}', 'getUserById')->middleware('role');
+    Route::put('user', 'update')->middleware('role');
 });
 
 
@@ -74,6 +76,7 @@ Route::controller(OrderController::class)->group(function () {
     Route::get('orders/student', 'getOrdersFormStudent');
     Route::put('orders/update/materialsandwork', 'updateMaterialsAndWork');
     Route::get('orders/worksandmaterials/{order_id}', 'getWorksAndMaterials');
+    Route::get('order/finalDetails/{order_id}', 'getDataToPDF');
 });
 
 Route::controller(WorkController::class)->group(function () {
@@ -94,8 +97,9 @@ Route::controller(WorkController::class)->group(function () {
 
 Route::controller(AnomalyController::class)->group(function () {
     Route::post('anomaly/create', 'create')->middleware('role');
+    Route::post('anomaly/createOne', 'createOne')->middleware('role');
     Route::post('anomaly/update', 'update')->middleware('role');
-    Route::post('anomaly/destroy', 'destroy')->middleware('role');
+    Route::delete('anomaly/destroy', 'destroy')->middleware('role');
 });
 
 
