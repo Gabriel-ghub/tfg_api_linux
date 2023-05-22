@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
 class AuthController extends Controller
 {
     public function __construct()
@@ -104,7 +103,7 @@ class AuthController extends Controller
 
         //$token = Auth::login($user);
         return response()->json([
-            'message' => "User successfully registered",
+            'message' => "Usuario creado correctamente",
             'user' => $user,
         ]);
     }
@@ -197,7 +196,7 @@ class AuthController extends Controller
 
         //$token = Auth::login($user);
         return response()->json([
-            'message' => "User successfully registered",
+            'message' => "Usuario creado correctamente",
             'user' => $user->email,
             'password' => $password,
         ]);
@@ -208,10 +207,9 @@ class AuthController extends Controller
     {
             //get all users from database where role_id = 2
             // $users = User::where('role_id', $role_search)->get();
-            $users = User::select('name', 'surname', 'email')->where('role_id', 1)->get();
+            $users = User::select('name', 'surname', 'email','id')->where('role_id', 1)->get();
             return response()->json($users, 200);
     }
-
 
 
     public function createTeacher(Request $request)
@@ -259,11 +257,9 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
 
-        //$token = Auth::login($user);
         return response()->json([
-            'message' => "User successfully registered",
-            'user' => $user->email,
-            'password' => $password,
+            'message' => "Userio creado correctamente",
+            'user' => $user,
         ]);
     }
 
@@ -512,5 +508,32 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Usuario actualizado correctamente.'], 200);
     }
+
+    public function deleteUser(Request $request, $id)
+    {
+        $validator = Validator::make(['id' => $id], [
+            'id' => 'required|exists:users,id'
+        ], [
+            'id.required' => 'El campo id es obligatorio.',
+            'id.exists' => 'El id no existe en la base de datos.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
+        }
+
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'No se ha encontrado al usuario.'], 404);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'Usuario eliminado correctamente.'], 200);
+    }
+
 
 }

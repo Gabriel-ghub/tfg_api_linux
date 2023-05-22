@@ -42,6 +42,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('teachers', 'getAllTeachers')->middleware('role');
     Route::get('user/{id}', 'getUserById')->middleware('role');
     Route::put('user', 'update')->middleware('role');
+    Route::delete('user/{id}', 'deleteUser')->middleware('role');
 });
 
 

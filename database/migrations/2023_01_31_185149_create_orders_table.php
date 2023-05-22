@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('surname');
             $table->string('email');
             $table->integer('phone');
-            $table->decimal('total', 10, 2);
+            $table->decimal('total', 10, 2)->default('0.00');
             $table->unsignedBigInteger('creator_user_id');
             $table->foreign('creator_user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('car_id');
