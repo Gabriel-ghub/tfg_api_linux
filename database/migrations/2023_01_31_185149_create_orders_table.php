@@ -21,8 +21,8 @@ return new class extends Migration
             $table->boolean('state')->default(false);
             $table->string('name');
             $table->string('surname');
-            $table->string('email');
-            $table->integer('phone');
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
             $table->decimal('total', 10, 2)->default('0.00');
             $table->unsignedBigInteger('creator_user_id');
             $table->foreign('creator_user_id')->references('id')->on('users')->onDelete('cascade');

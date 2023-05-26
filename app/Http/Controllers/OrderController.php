@@ -49,40 +49,41 @@ class OrderController extends Controller
         }
     }
 
+
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'date_in' => 'required|date',
             'kilometres' => 'required|integer',
-            'car_id' => 'required|integer',
-            // 'total' => 'required|numeric',
-            'phone' => 'required|integer',
+            'car_id' => 'required|integer|exists:cars,id',
             'name' => 'required|string|max:40',
             'surname' => 'required|string|max:40',
-            'email' => 'required|string|max:50'
+            'phone' => 'nullable|string|max:12|regex:/^[0-9]+$/',
+            'email' => 'nullable|string|max:50|email'
         ], [
             'date_in.required' => 'La fecha de ingreso es requerida',
             'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
             'car_id.required' => 'El id del coche es necesario',
-            // 'total.required' => 'El total es requerido y debe ser numerico',
-            // 'total.numeric' => 'El total debe ser formato numerico',
+            'car_id.exists' => 'El coche no existe',
             'kilometres.required' => 'Los kilometros son requeridos',
             'kilometres.integer' => 'Los kilometros deben ser números',
-            'phone.required' => 'El telefono es requerido',
-            'phone.integer' => 'El telefono debe ser numerico',
+            'phone.max' => 'Máximo 12 caracteres',
+            'phone.string' => 'El telefono solo acepta números, sin espacios.',
+            'phone.regex' => 'El telefono debe contener solo números.',
             'name.required' => 'El nombre es requerido',
             'name.string' => 'El nombre debe ser una cadena de texto',
             'name.max' => 'Máximo 40 caracteres',
             'surname.required' => 'El apellido es requerido',
             'surname.string' => 'El apellido debe ser una cadena de texto',
             'surname.max' => 'Máximo 40 caracteres',
-            'email.required' => 'El email es requerido',
             'email.string' => 'El email debe ser una cadena de texto',
             'email.max' => 'Máximo 50 caracteres',
+            'email.email' => 'El email debe tener un formato válido.'
         ]);
+
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation error',
+                'message' => 'Error de validación',
                 'errors' => $validator->errors()
             ], 409);
         }
@@ -94,6 +95,7 @@ class OrderController extends Controller
 
         // Convertir el total a formato de coma flotante con punto como separador decimal
         $total = str_replace(',', '.', $total);
+
         $user = Auth::user();
         $user_id = $user->id;
 
@@ -106,57 +108,66 @@ class OrderController extends Controller
             'car_id' => $request->car_id,
             'name' => $request->name,
             'surname' => $request->surname,
-            'email' => $request->email,
-            'phone' => $request->phone
+            'email' => $request->email ?? '',
+            'phone' => $request->phone ?? ''
         ]);
-        return response()->json(['message' => 'Post creado con exito', 'data' => $order], 201);
+
+        return response()->json(['message' => 'Post creado con éxito', 'data' => $order], 201);
     }
+
+
+
 
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
-            'surname' => ['required', 'string', 'regex:/^[a-zA-Z]+$/u', 'min:3', 'max:40'],
-            'email' => ['required', 'string', 'email', 'unique:users,email', 'max:50'],
+            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
+            'surname' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
+            'phone' => ['nullable', 'string', 'max:12', 'regex:/^[0-9]+$/'],
+            'email' => ['nullable', 'string', 'max:50', 'email']
         ], [
             'name.required' => 'El campo nombre es obligatorio.',
             'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
-            'name.regex' => 'El campo nombre solo puede contener letras.',
+            'name.regex' => 'El campo nombre solo puede contener letras y espacios en blanco.',
             'name.min' => 'El campo nombre debe tener al menos 3 caracteres.',
             'name.max' => 'El campo nombre no puede tener más de 40 caracteres.',
             'surname.required' => 'El campo apellido es obligatorio.',
             'surname.string' => 'El campo apellido debe ser una cadena de caracteres.',
-            'surname.regex' => 'El campo apellido solo puede contener letras.',
+            'surname.regex' => 'El campo apellido solo puede contener letras y espacios en blanco.',
             'surname.min' => 'El campo apellido debe tener al menos 3 caracteres.',
             'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
-            'email.required' => 'El campo correo electrónico es obligatorio.',
-            'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
-            'email.email' => 'El campo correo electrónico debe ser una dirección de correo válida.',
-            'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
-            'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
+            'phone.max' => 'Máximo 12 caracteres.',
+            'phone.string' => 'El teléfono debe ser una cadena de texto.',
+            'phone.regex' => 'El teléfono debe contener solo números.',
+            'email.max' => 'Máximo 50 caracteres.',
+            'email.string' => 'El correo electrónico debe ser una cadena de texto.',
+            'email.email' => 'El correo electrónico debe tener un formato válido.'
         ]);
+
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation error',
+                'message' => 'Error de validación',
                 'errors' => $validator->errors()
             ], 409);
         }
 
-
-
         $order = Order::findOrFail($request->id);
+
         if ($order) {
-            $order->name = $request->name;
-            $order->surname = $request->surname;
-            $order->phone = $request->phone;
-            $order->email = $request->email;
+            $order->name = trim(preg_replace('/\s+/', ' ', $request->name));
+            $order->surname = trim(preg_replace('/\s+/', ' ', $request->surname));
+            $order->phone = trim($request->phone) ?? '';
+            $order->email = trim($request->email) ?? '';
             $order->kilometres = $request->kilometres;
             $order->save();
+
             return response()->json(['order' => $order]);
         } else {
             return response()->json(["message" => 'No existe esa orden'], 404);
         }
     }
+
+
 
     public function delete(Request $request)
     {

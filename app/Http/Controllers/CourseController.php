@@ -57,7 +57,7 @@ class CourseController extends Controller
             $course->name = $request->input('name');
             $course->year = $request->input('year');
             $course->save();
-            return response()->json(['message' => 'Course updated successfully', 'data' => $course]);
+            return response()->json(['message' => 'Curso actualizado correctamente', 'data' => $course]);
     }
 
     public function create(Request $request)
