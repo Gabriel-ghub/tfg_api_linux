@@ -84,7 +84,8 @@ class CarController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'error' => $validator->errors()->first()
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
             ], 409);
         }
 
