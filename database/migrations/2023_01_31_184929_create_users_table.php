@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('role_id');
             $table->foreign('role_id')->references('id')->on('roles')->onUpdate('cascade');
             $table->unsignedBigInteger('course_id')->nullable();
-            $table->foreign('course_id')->references('id')->on('courses')->onUpdate('cascade');
+            $table->foreign('course_id')->references('id')->on('courses')->onUpdate('cascade')->onDelete("cascade");
             $table->rememberToken();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
