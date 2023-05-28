@@ -25,9 +25,10 @@ class OrderController extends Controller
     public function showAll()
     {
         try {
-            $orders = Order::select('orders.id', 'cars.plate', 'orders.date_in', 'orders.kilometres', 'orders.state', 'orders.name', 'orders.surname', 'orders.email', 'orders.phone',)
-                ->join('cars', 'cars.id', '=', 'orders.car_id')
-                ->get();
+            $orders = Order::select('orders.id', 'cars.plate', 'orders.date_in', 'orders.kilometres', 'orders.state', 'orders.name', 'orders.surname', 'orders.email', 'orders.phone')
+            ->join('cars', 'cars.id', '=', 'orders.car_id')
+            ->orderBy('orders.id', 'desc') // Ordenar por ID de orden en orden descendente
+            ->get();
 
             return response()->json($orders, 200);
         } catch (\Exception $e) {

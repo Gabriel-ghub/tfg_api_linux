@@ -18,7 +18,6 @@ class AuthController extends Controller
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
-
     public function login(Request $request)
     {
         try {
@@ -104,7 +103,7 @@ class AuthController extends Controller
 
         //$token = Auth::login($user);
         return response()->json([
-            'message' => "Usuario creado correctamente",
+            'message' => "Alumno creado correctamente.",
             'user' => $user,
         ]);
     }
@@ -542,7 +541,7 @@ class AuthController extends Controller
 
         $user = User::find($request->id);
         if (!$user) {
-            return response()->json(['message' => 'No se ha encontrado el estudiante.'], 404);
+            return response()->json(['message' => 'No se ha encontrado al alumno.'], 404);
         }
 
         $user->name = $request->name;
@@ -552,7 +551,7 @@ class AuthController extends Controller
 
         $user->save();
 
-        return response()->json(['message' => 'Usuario actualizado correctamente.'], 200);
+        return response()->json(['message' => 'Alumno actualizado correctamente.'], 200);
     }
 
     public function deleteUser(Request $request, $id)

@@ -120,11 +120,11 @@ class CarController extends Controller
             'brand' => 'bail|required|not_regex:/^\s*$/',
         ], [
             'model.required' => 'El modelo es requerido.',
-            'plate.required' => 'La placa es requerida.',
-            'plate.unique' => 'Ya existe un coche con esa placa.',
+            'plate.required' => 'La matrícula es requerida.',
+            'plate.unique' => 'Ya existe un coche con esa matrícula.',
             'brand.required' => 'La marca es requerida.',
             'model.not_regex' => 'El modelo no puede contener solo espacios en blanco.',
-            'plate.not_regex' => 'La placa no puede contener solo espacios en blanco.',
+            'plate.not_regex' => 'La matrícula no puede contener solo espacios en blanco.',
             'brand.not_regex' => 'La marca no puede contener solo espacios en blanco.',
         ]);
 
