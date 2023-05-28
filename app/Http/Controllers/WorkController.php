@@ -21,19 +21,32 @@ class WorkController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'description' => 'required|string',
-            'order_id' => 'required|string',
+            'description' => 'bail|required|string|max:200',
+            'order_id' => 'bail|required|exists:orders,id',
+        ], [
+            'description.required' => 'La descripción es requerida.',
+            'description.string' => 'La descripción debe ser una cadena de texto.',
+            'description.max' => 'La descripción no puede tener más de 200 caracteres.',
+            'order_id.required' => 'El ID de orden es requerido.',
+            'order_id.exists' => 'El ID de orden no existe en la tabla orders.',
         ]);
+
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 409);
         }
 
+        $sanitizedDescription = strip_tags($request->description);
+
         $work = Work::create([
-            'description' => $request->description,
+            'description' => $sanitizedDescription,
             'hours' => "0",
             'state' => false,
             'order_id' => $request->order_id,
         ]);
+
         $returnData = [
             'id' => $work->id,
             'description' => $work->description,
@@ -43,20 +56,20 @@ class WorkController extends Controller
         return response()->json($returnData, 200);
     }
 
+
     //update work
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'description' => 'required|string|min:2|max:200',
-            'id' => 'required|integer|exists:trabajos,id',
+            'description' => 'bail|required|string|min:2|max:200',
+            'id' => 'bail|required|exists:works,id',
         ], [
             'description.required' => 'El campo descripción es obligatorio.',
             'description.string' => 'El campo descripción debe ser una cadena de caracteres.',
             'description.min' => 'El campo descripción debe tener al menos :min caracteres.',
             'description.max' => 'El campo descripción no debe tener más de :max caracteres.',
             'id.required' => 'El campo ID es obligatorio.',
-            'id.integer' => 'El campo ID debe ser un número entero.',
-            'id.exists' => 'El ID especificado no existe en la tabla trabajos.',
+            'id.exists' => 'El ID especificado no existe',
         ]);
 
         if ($validator->fails()) {
@@ -74,7 +87,6 @@ class WorkController extends Controller
             'description' => $work->description,
             'order' => $work->order_id,
         ];
-        // $works = Work::select('description', 'state', 'id')->where('order_id', $order_id)->get()->toArray();
         return response()->json($returnData, 200);
     }
 

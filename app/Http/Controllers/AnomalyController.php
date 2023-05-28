@@ -16,6 +16,7 @@ class AnomalyController extends Controller
 
     public function create(Request $request)
     {
+
         $validator = Validator::make($request->all(), [
             'order_id' => 'required',
         ]);
@@ -37,20 +38,34 @@ class AnomalyController extends Controller
     }
     public function createOne(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'order_id' => 'required',
-        ]);
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'order_id' => ['bail', 'required', 'exists:orders,id'],
+                'description' => ['bail', 'required', 'string', 'max:255'],
+            ],
+            [
+                'order_id.required' => 'El campo nombre es obligatorio.',
+                'order_id.exists' => 'La orden no existe.',
+                'name.regex' => 'El campo nombre solo puede contener letras y espacios en blanco.',
+                'name.min' => 'El campo nombre debe tener al menos 3 caracteres.',
+                'description.max' => 'La descripcion no puede tener más de 255 caracteres.',
+                'description.required' => 'La descripcion es obligatoria.',
+                'description.string' => 'La descripcion debe ser una cadena de caracteres.',
+            ]
+        );
+
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 409);
         }
 
-        $anomaly = $request->anomaly;
-        $order_id = $request->order_id;
-
-
         $anomaly = Anomaly::create([
-            'order_id' => $order_id,
-            'description' => $anomaly,
+            'order_id' => $request->order_id,
+            'description' => $request->description,
         ]);
         return response()->json($anomaly, 200);
     }

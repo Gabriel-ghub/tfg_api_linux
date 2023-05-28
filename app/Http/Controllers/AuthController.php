@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+
 class AuthController extends Controller
 {
     public function __construct()
@@ -108,21 +109,64 @@ class AuthController extends Controller
         ]);
     }
 
-   
+
+
+    public function changePassword(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required',
+            'password1' => 'required|min:6|max:16',
+            'password2' => 'required|same:password1',
+        ], [
+            'current_password.required' => 'La contraseña actual es requerida.',
+            'password1.required' => 'La nueva contraseña es requerida.',
+            'password1.min' => 'La nueva contraseña debe tener al menos 6 caracteres.',
+            'password1.max' => 'La nueva contraseña no puede tener más de 16 caracteres.',
+            'password2.required' => 'La confirmación de contraseña es requerida.',
+            'password2.same' => 'La confirmación de contraseña no coincide con la nueva contraseña.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        $user_token = Auth::user();
+        $user = User::find($user_token->id);
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
+
+        // Verificar que la contraseña actual coincide
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['errors' => ['current_password'=>'Contraseña actual incorrecta']], 400);
+        }
+
+        // Hashear y guardar la nueva contraseña
+        $newPassword = Hash::make($request->password1);
+        $user->password = $newPassword;
+        $user->save();
+
+        return response()->json(['message' => 'Contraseña actualizada correctamente'], 200);
+    }
+
 
     public function me()
     {
         $user = Auth::user();
-        if(!$user){
-            return response()->json(["message"=>"Token invalido","ok"=>false],400);
+        if (!$user) {
+            return response()->json(["message" => "Token invalido", "ok" => false], 400);
         }
         $data = [
             "name" => $user->name,
             "surname" => $user->surname,
             "id" => $user->id,
-            "email" => $user->email 
-        ];   
-        return response()->json(["user"=>$data,"ok"=>true],200);
+            "email" => $user->email
+        ];
+        return response()->json(["user" => $data, "ok" => true], 200);
     }
 
     public function logout()
@@ -140,8 +184,8 @@ class AuthController extends Controller
         $data_user = [
             "name" => $user->name,
             "surname" => $user->surname,
-            "email" => $user ->email,
-            "id" => $user ->id
+            "email" => $user->email,
+            "id" => $user->id
         ];
         return response()->json([
             'access_token' => Auth::refresh(),
@@ -181,7 +225,7 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 409);
         }
-        
+
         // $password = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 8); // Generamos una contraseña aleatoria de 8 caracteres
         $password = 123456; // Generamos una contraseña aleatoria de 8 caracteres
 
@@ -205,10 +249,10 @@ class AuthController extends Controller
 
     function getAllTeachers(Request $request)
     {
-            //get all users from database where role_id = 2
-            // $users = User::where('role_id', $role_search)->get();
-            $users = User::select('name', 'surname', 'email','id')->where('role_id', 1)->get();
-            return response()->json($users, 200);
+        //get all users from database where role_id = 2
+        // $users = User::where('role_id', $role_search)->get();
+        $users = User::select('name', 'surname', 'email', 'id')->where('role_id', 1)->get();
+        return response()->json($users, 200);
     }
 
 
@@ -246,7 +290,7 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 409);
         }
-        
+
         $password = substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 8); // Generamos una contraseña aleatoria de 8 caracteres
 
         $user = User::create([
@@ -277,11 +321,11 @@ class AuthController extends Controller
         $courseId = $request->course_id;
 
         $csv = fopen($csvPath, 'r');
-        $header = fgetcsv($csv); 
+        $header = fgetcsv($csv);
         $errors = [];
         $students = [];
         while ($data = fgetcsv($csv)) {
-         
+
             $name = $data[0];
             $surname = $data[1];
             $username = $data[2];
@@ -317,7 +361,8 @@ class AuthController extends Controller
     }
 
 
-    public function createCSV2(Request $request){
+    public function createCSV2(Request $request)
+    {
 
         $validator = Validator::make($request->all(), [
             'csv' => 'required|mimes:csv',
@@ -328,7 +373,7 @@ class AuthController extends Controller
             'course_id.required' => 'El campo ID de curso es obligatorio.',
             'course_id.exists' => 'El ID de curso no existe en la base de datos.'
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation error',
@@ -338,41 +383,41 @@ class AuthController extends Controller
         // if (!$request->hasFile('csv')) {
         //     return response()->json(['message' => 'No se ha enviado ningún archivo.'], 400);
         // }
-    
+
         // // Validamos que el archivo sea un csv
         // $file = $request->file('csv');
         // if ($file->getClientOriginalExtension() != 'csv') {
         //     return response()->json(['message' => 'El archivo no es un CSV.'], 400);
         // }
         $file = $request->file('csv');
-    
+
         // Obtenemos la ruta del archivo csv
         $csvPath = $file->getRealPath();
-    
+
         // Validamos que se haya enviado el id del curso
         // $courseId = $request->course_id;
         // if (!$courseId) {
         //     return response()->json(['message' => 'No se ha enviado el id del curso.'], 400);
         // }
-   
+
         $courseId = $request->course_id;
 
-    
+
         // Abrimos el archivo csv
         $csv = fopen($csvPath, 'r');
-    
+
         // Obtenemos el encabezado del archivo csv
         $header = fgetcsv($csv);
-    
+
         // Inicializamos un array para guardar los errores
         $errors = [];
-    
+
         // Inicializamos un array para guardar los estudiantes creados
         $students = [];
 
         while ($data = fgetcsv($csv)) {
-    
-         
+
+
             $name = $data[0];
             $surname = $data[1];
             $email = $data[2];
@@ -403,7 +448,7 @@ class AuthController extends Controller
             if ($validator->fails()) {
                 // Si falla la validación, agregamos el error al arreglo de errores
                 $errors[] = [
-                    'message' => "$email ".$validator->errors()->first('email')
+                    'message' => "$email " . $validator->errors()
                 ];
                 continue;
             }
@@ -449,11 +494,11 @@ class AuthController extends Controller
                 'email' => $student->email,
             ];
         }
-        return response()->json(['success' => 'Se han insertado los usuarios correctamente.', 'students' => $studentsArray],200);
-    
+        return response()->json(['success' => 'Se han insertado los usuarios correctamente.', 'students' => $studentsArray], 200);
     }
 
-    public function getUserById(Request $request , $id){
+    public function getUserById(Request $request, $id)
+    {
         //select only name, surname,email, id and course_id
         $user = User::select('name', 'surname', 'email', 'id', 'course_id')->where('id', $id)->first();
         if (!$user) {
@@ -462,11 +507,12 @@ class AuthController extends Controller
         return response()->json($user, 200);
     }
 
-    public function update(Request $request){
+    public function update(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:40',
             'surname' => 'required|string|max:40',
-            'email' => 'required|string|max:50|unique:users|regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
+            // 'email' => 'required|string|max:50|unique:users|regex:/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
             'id' => 'required|exists:users,id',
             'course_id' => 'required|exists:courses,id'
         ], [
@@ -476,11 +522,11 @@ class AuthController extends Controller
             'surname.required' => 'El campo apellido es obligatorio.',
             'surname.string' => 'El campo apellido debe ser una cadena de caracteres.',
             'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
-            'email.required' => 'El campo correo electrónico es obligatorio.',
-            'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
-            'email.regex' => 'El campo correo electrónico debe ser una dirección de correo válida.',
-            'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
-            'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
+            // 'email.required' => 'El campo correo electrónico es obligatorio.',
+            // 'email.string' => 'El campo correo electrónico debe ser una cadena de caracteres.',
+            // 'email.regex' => 'El campo correo electrónico debe ser una dirección de correo válida.',
+            // 'email.max' => 'El campo correo electrónico no puede tener más de 50 caracteres.',
+            // 'email.unique' => 'Este correo electrónico ya está en uso por otro usuario.',
             'id.required' => 'El campo id es obligatorio.',
             'id.exists' => 'El id no existe en la base de datos.',
             'course_id.required' => 'El campo id de curso es obligatorio.',
@@ -501,7 +547,7 @@ class AuthController extends Controller
 
         $user->name = $request->name;
         $user->surname = $request->surname;
-        $user->email = $request->email;
+        // $user->email = $request->email;
         $user->course_id = $request->course_id;
 
         $user->save();
@@ -534,6 +580,4 @@ class AuthController extends Controller
 
         return response()->json(['message' => 'Usuario eliminado correctamente.'], 200);
     }
-
-
 }

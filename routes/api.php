@@ -43,14 +43,18 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('user/{id}', 'getUserById')->middleware('role');
     Route::put('user', 'update')->middleware('role');
     Route::delete('user/{id}', 'deleteUser')->middleware('role');
+    Route::put('user/changePassword', 'changePassword')->middleware('role');
 });
 
 
 Route::controller(CarController::class)->group(function () {
     Route::post('car/create', 'store')->middleware('role');
-    Route::post('car/modify', 'modify')->middleware('role');
-    Route::post('car/delete', 'delete')->middleware('role');
+    Route::put('car/{car_id}', 'updateAndPlate')->middleware('role');
+    Route::put('car/{car_id}/update', 'update')->middleware('role');
+    Route::delete('car/{car_id}', 'delete')->middleware('role');
     Route::get('car/search', 'search')->middleware('role');
+    Route::get('car/{id}', 'show')->middleware('role');
+    Route::get('cars', 'index')->middleware('role');
 });
 
 Route::controller(CourseController::class)->group(function () {
@@ -64,7 +68,7 @@ Route::controller(CourseController::class)->group(function () {
 
 Route::controller(OrderController::class)->group(function () {
     Route::post('order/create', 'create')->middleware('role');
-    Route::post('order/delete', 'delete')->middleware('role');
+    Route::delete('order/{order_id}', 'delete')->middleware('role');
     Route::get('order/list', 'showAll')->middleware('role');
     Route::get('order/{id}/details', 'getOrder')->middleware('role');
     Route::post('order/{id}/update', 'update')->middleware('role');

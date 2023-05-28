@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
 use App\Models\Car;
 use App\Models\User;
+use App\Models\Work;
+use App\Models\Order;
 use App\Models\Anomaly;
 use App\Models\Material;
-use App\Models\Work;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\CssSelector\Node\FunctionNode;
@@ -23,10 +24,15 @@ class OrderController extends Controller
 
     public function showAll()
     {
-        $orders = Order::select('orders.id', 'cars.plate', 'orders.date_in', 'orders.kilometres', 'orders.state', 'orders.name', 'orders.surname', 'orders.email', 'orders.phone',)
-            ->join('cars', 'cars.id', '=', 'orders.car_id')
-            ->get();
-        return response()->json($orders, 200);
+        try {
+            $orders = Order::select('orders.id', 'cars.plate', 'orders.date_in', 'orders.kilometres', 'orders.state', 'orders.name', 'orders.surname', 'orders.email', 'orders.phone',)
+                ->join('cars', 'cars.id', '=', 'orders.car_id')
+                ->get();
+
+            return response()->json($orders, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al obtener las ordenes.'], 500);
+        }
     }
 
     public function getOrder($orderNumber)
@@ -53,32 +59,32 @@ class OrderController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'date_in' => 'required|date',
-            'kilometres' => 'required|integer',
-            'car_id' => 'required|integer|exists:cars,id',
-            'name' => 'required|string|max:40',
-            'surname' => 'required|string|max:40',
-            'phone' => 'nullable|string|max:12|regex:/^[0-9]+$/',
-            'email' => 'nullable|string|max:50|email'
+            'date_in' => 'bail|required|date',
+            'kilometres' => 'bail|required|integer',
+            'car_id' => 'bail|required|integer|exists:cars,id',
+            'name' => 'bail|required|string|max:40',
+            'surname' => 'bail|required|string|max:40',
+            'phone' => 'bail|nullable|string|max:12|regex:/^[0-9]+$/',
+            'email' => 'bail|nullable|string|max:50|email'
         ], [
-            'date_in.required' => 'La fecha de ingreso es requerida',
-            'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa',
-            'car_id.required' => 'El id del coche es necesario',
-            'car_id.exists' => 'El coche no existe',
-            'kilometres.required' => 'Los kilometros son requeridos',
-            'kilometres.integer' => 'Los kilometros deben ser números',
-            'phone.max' => 'Máximo 12 caracteres',
-            'phone.string' => 'El telefono solo acepta números, sin espacios.',
-            'phone.regex' => 'El telefono debe contener solo números.',
-            'name.required' => 'El nombre es requerido',
-            'name.string' => 'El nombre debe ser una cadena de texto',
-            'name.max' => 'Máximo 40 caracteres',
-            'surname.required' => 'El apellido es requerido',
-            'surname.string' => 'El apellido debe ser una cadena de texto',
-            'surname.max' => 'Máximo 40 caracteres',
-            'email.string' => 'El email debe ser una cadena de texto',
-            'email.max' => 'Máximo 50 caracteres',
-            'email.email' => 'El email debe tener un formato válido.'
+            'date_in.required' => 'La fecha de ingreso es requerida.',
+            'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa.',
+            'car_id.required' => 'El ID del coche es necesario.',
+            'car_id.exists' => 'El coche no existe.',
+            'kilometres.required' => 'Los kilómetros son requeridos.',
+            'kilometres.integer' => 'Los kilómetros deben ser números.',
+            'phone.max' => 'Máximo 12 caracteres.',
+            'phone.string' => 'El teléfono solo acepta números, sin espacios.',
+            'phone.regex' => 'El teléfono debe contener solo números.',
+            'name.required' => 'El nombre es requerido.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'name.max' => 'Máximo 40 caracteres.',
+            'surname.required' => 'El apellido es requerido.',
+            'surname.string' => 'El apellido debe ser una cadena de texto.',
+            'surname.max' => 'Máximo 40 caracteres.',
+            'email.string' => 'El correo electrónico debe ser una cadena de texto.',
+            'email.max' => 'Máximo 50 caracteres.',
+            'email.email' => 'El correo electrónico debe tener un formato válido.'
         ]);
 
         if ($validator->fails()) {
@@ -121,10 +127,11 @@ class OrderController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
-            'surname' => ['required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
-            'phone' => ['nullable', 'string', 'max:12', 'regex:/^[0-9]+$/'],
-            'email' => ['nullable', 'string', 'max:50', 'email']
+            'name' => ['bail', 'required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
+            'surname' => ['bail', 'required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
+            'phone' => ['bail', 'nullable', 'string', 'max:12', 'regex:/^[0-9]+$/'],
+            'email' => ['bail', 'nullable', 'string', 'max:50', 'email'],
+            'kilometres' => ['bail','required','integer'],
         ], [
             'name.required' => 'El campo nombre es obligatorio.',
             'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
@@ -136,6 +143,8 @@ class OrderController extends Controller
             'surname.regex' => 'El campo apellido solo puede contener letras y espacios en blanco.',
             'surname.min' => 'El campo apellido debe tener al menos 3 caracteres.',
             'surname.max' => 'El campo apellido no puede tener más de 40 caracteres.',
+            'kilometres.required' => 'Los kilómetros son requeridos.',
+            'kilometres.integer' => 'Los kilómetros deben ser números.',
             'phone.max' => 'Máximo 12 caracteres.',
             'phone.string' => 'El teléfono debe ser una cadena de texto.',
             'phone.regex' => 'El teléfono debe contener solo números.',
@@ -169,16 +178,17 @@ class OrderController extends Controller
 
 
 
-    public function delete(Request $request)
+    public function delete($order_id)
     {
-        $validator = Validator::make($request->all(), [
-            'order_id' => 'required|integer',
+        $validator = Validator::make(['order_id' => $order_id], [
+            'order_id' => 'required|exists:orders,id',
         ]);
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
 
-        $order = Order::find($request->order_id);
+        $order = Order::find($order_id);
 
         if ($order) {
             $order->delete();
@@ -218,16 +228,25 @@ class OrderController extends Controller
 
     public function closeOrder(Request $request, $order_id)
     {
+        $validator = Validator::make(['order_id' => $order_id], [
+            'order_id' => 'required|exists:orders,id',
+        ], [
+            'order_id.required' => 'El ID de orden es requerido.',
+            'order_id.exists' => 'El ID de orden no existe en la tabla orders.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
         $order = Order::find($order_id);
-        // $works = $order->works;
-        // if ($works) {
-        //     foreach ($works as $work) {
-        //         $work->state = true;
-        //         $work->save();
-        //     }
-        // }
         $order->state = 1;
+        $order->date_out = Carbon::now()->toDateString();
         $order->save();
+
         return response()->json(["message" => "Orden cerrada correctamente, se han cerrado todos sus trabajos"], 200);
     }
 
@@ -400,19 +419,19 @@ class OrderController extends Controller
     public function getWorksAndMaterials(Request $request, $order_id)
     {
         $user = Auth::user();
-        
-        
+
+
         $works = Work::select('id', 'description')
             ->where('order_id', $order_id)
             ->get();
-        if($user->roleid == 1){
-        $materials = Material::select('id', 'description','quantity')
-            ->where('order_id', $order_id)
-            ->get();
-        }else{
-            $materials = Material::select('id', 'description','quantity','price')
-            ->where('order_id', $order_id)
-            ->get();
+        if ($user->roleid == 1) {
+            $materials = Material::select('id', 'description', 'quantity')
+                ->where('order_id', $order_id)
+                ->get();
+        } else {
+            $materials = Material::select('id', 'description', 'quantity', 'price')
+                ->where('order_id', $order_id)
+                ->get();
         }
 
         return response()->json([
@@ -421,19 +440,20 @@ class OrderController extends Controller
         ]);
     }
 
-    public function getDataToPDF(Request $request, $order_id){
-        $order = Order::select('date_in', 'date_out', 'kilometres', 'name', 'surname', 'phone', 'email','car_id')->find($order_id);
+    public function getDataToPDF(Request $request, $order_id)
+    {
+        $order = Order::select('date_in', 'date_out', 'kilometres', 'name', 'surname', 'phone', 'email', 'car_id')->find($order_id);
         $anomalies = Anomaly::select('description')
             ->where('order_id', $order_id)
             ->get()
             ->pluck('description');
-        $materials = Material::select('description',"price","quantity")->where('order_id', $order_id)->get()->toArray();
+        $materials = Material::select('description', "price", "quantity")->where('order_id', $order_id)->get()->toArray();
         $work = Work::select('description')->where('order_id', $order_id)->get()->pluck('description');
-        $car = Car::select("brand", "model","plate")->where('id',$order->car_id)->get()->toArray();
+        $car = Car::select("brand", "model", "plate")->where('id', $order->car_id)->get()->toArray();
         //get users asssiagned to order
         $students = Order::find($order_id)->assignedUsers()->get()->map(function ($user) {
-                return $user->name . ' ' . $user->surname;
-            });
+            return $user->name . ' ' . $user->surname;
+        });
 
         return response()->json([
             'order' => $order,
