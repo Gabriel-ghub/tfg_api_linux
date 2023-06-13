@@ -82,6 +82,7 @@ Route::controller(OrderController::class)->group(function () {
     Route::put('orders/update/materialsandwork', 'updateMaterialsAndWork');
     Route::get('orders/worksandmaterials/{order_id}', 'getWorksAndMaterials');
     Route::get('order/finalDetails/{order_id}', 'getDataToPDF');
+    Route::post('order/prueba', 'prueba');
 });
 
 Route::controller(WorkController::class)->group(function () {

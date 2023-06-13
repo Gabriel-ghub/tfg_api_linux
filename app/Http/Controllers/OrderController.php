@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\CssSelector\Node\FunctionNode;
 
 class OrderController extends Controller
 {
@@ -26,9 +25,9 @@ class OrderController extends Controller
     {
         try {
             $orders = Order::select('orders.id', 'cars.plate', 'orders.date_in', 'orders.kilometres', 'orders.state', 'orders.name', 'orders.surname', 'orders.email', 'orders.phone')
-            ->join('cars', 'cars.id', '=', 'orders.car_id')
-            ->orderBy('orders.id', 'desc') // Ordenar por ID de orden en orden descendente
-            ->get();
+                ->join('cars', 'cars.id', '=', 'orders.car_id')
+                ->orderBy('orders.id', 'desc') // Ordenar por ID de orden en orden descendente
+                ->get();
 
             return response()->json($orders, 200);
         } catch (\Exception $e) {
@@ -132,7 +131,7 @@ class OrderController extends Controller
             'surname' => ['bail', 'required', 'string', 'regex:/^[a-zA-Z\s]+$/u', 'min:3', 'max:40'],
             'phone' => ['bail', 'nullable', 'string', 'max:12', 'regex:/^[0-9]+$/'],
             'email' => ['bail', 'nullable', 'string', 'max:50', 'email'],
-            'kilometres' => ['bail','required','integer'],
+            'kilometres' => ['bail', 'required', 'integer'],
         ], [
             'name.required' => 'El campo nombre es obligatorio.',
             'name.string' => 'El campo nombre debe ser una cadena de caracteres.',
@@ -464,5 +463,44 @@ class OrderController extends Controller
             'car' => $car,
             'students' => $students
         ]);
+    }
+
+    public function prueba(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'date_in' => 'bail|required|date',
+            'kilometres' => 'bail|required|integer',
+            'car_id' => 'bail|required|integer|exists:cars,id',
+            'name' => 'bail|required|string|max:40',
+            'surname' => 'bail|required|string|max:40',
+            'phone' => 'bail|nullable|string|max:12|regex:/^[0-9]+$/',
+            'email' => 'bail|nullable|string|max:50|email'
+        ], [
+            'date_in.required' => 'La fecha de ingreso es requerida.',
+            'date_in.date' => 'El formato de la fecha debe ser dd-mm-aaaa.',
+            'car_id.required' => 'El ID del coche es necesario.',
+            'car_id.exists' => 'El coche no existe.',
+            'kilometres.required' => 'Los kilómetros son requeridos.',
+            'kilometres.integer' => 'Los kilómetros deben ser números.',
+            'phone.max' => 'Máximo 12 caracteres.',
+            'phone.string' => 'El teléfono solo acepta números, sin espacios.',
+            'phone.regex' => 'El teléfono debe contener solo números.',
+            'name.required' => 'El nombre es requerido.',
+            'name.string' => 'El nombre debe ser una cadena de texto.',
+            'name.max' => 'Máximo 40 caracteres.',
+            'surname.required' => 'El apellido es requerido.',
+            'surname.string' => 'El apellido debe ser una cadena de texto.',
+            'surname.max' => 'Máximo 40 caracteres.',
+            'email.string' => 'El correo electrónico debe ser una cadena de texto.',
+            'email.max' => 'Máximo 50 caracteres.',
+            'email.email' => 'El correo electrónico debe tener un formato válido.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 409);
+        }
     }
 }
